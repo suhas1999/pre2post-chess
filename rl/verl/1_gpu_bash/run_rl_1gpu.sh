@@ -46,6 +46,12 @@ ROLLOUT_DIR="${RUN_DIR}/rollouts/training"
 VALIDATION_DIR="${RUN_DIR}/rollouts/validation"
 
 export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-0}"
+# Rented containers can cap threads (Vast: pids.max=1024) while nproc reports the whole
+# host, so Ray/torch/vLLM pools sized to nproc die with "Resource temporarily unavailable".
+RAY_NUM_CPUS="${RAY_NUM_CPUS:-4}"
+export OMP_NUM_THREADS="${OMP_NUM_THREADS:-2}" MKL_NUM_THREADS="${MKL_NUM_THREADS:-2}"
+export TORCHINDUCTOR_COMPILE_THREADS=1 TOKENIZERS_PARALLELISM=false
+export RAY_num_server_call_thread=1 GRPC_POLL_STRATEGY=poll
 export REWARD_MODEL_TYPE="RULE_BASED"
 export MLFLOW_TRACKING_URI="file://${MLFLOW_DIR}"
 unset ROCR_VISIBLE_DEVICES HIP_VISIBLE_DEVICES
@@ -108,6 +114,7 @@ python3 -m verl.trainer.main_ppo \
   "trainer.project_name=${PROJECT_NAME}" \
   "trainer.experiment_name=${EXPERIMENT_NAME}" \
   trainer.n_gpus_per_node=1 \
+  "ray_init.num_cpus=${RAY_NUM_CPUS}" \
   trainer.nnodes=1 \
   "trainer.save_freq=${SAVE_FREQ}" \
   "trainer.test_freq=${TEST_FREQ}" \
