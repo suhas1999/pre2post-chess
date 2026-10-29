@@ -54,7 +54,7 @@ export TORCHINDUCTOR_COMPILE_THREADS=1 TOKENIZERS_PARALLELISM=false
 export RAY_num_server_call_thread=1 GRPC_POLL_STRATEGY=poll
 export RAY_num_prestart_python_workers=0 RAY_prestart_worker_first_driver=0
 export REWARD_MODEL_TYPE="RULE_BASED"
-export MLFLOW_TRACKING_URI="file://${MLFLOW_DIR}"
+export MLFLOW_TRACKING_URI="sqlite:///${MLFLOW_DIR}/mlflow.db"
 unset ROCR_VISIBLE_DEVICES HIP_VISIBLE_DEVICES
 
 cd "${PKG_ROOT}"
