@@ -13,8 +13,8 @@ for v in "${required_vars[@]}"; do
   [[ -z "${!v:-}" ]] && { echo "[ERROR] Missing required env var: ${v}" >&2; exit 1; }
 done
 
-# Validation is off (TEST_FREQ > TOTAL_STEPS, no val before train), but verl
-# still loads a val file, so the train file is a fine default.
+# Validation is off (TEST_FREQ=-1; verl otherwise validates on the last step before saving),
+# but verl still loads a val file, so the train file is a fine default.
 EVAL_DATA_PATH="${EVAL_DATA_PATH:-${TRAIN_DATA_PATH}}"
 PKG_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CUSTOM_REWARD_PATH="${CUSTOM_REWARD_PATH:-${PKG_ROOT}/reward_function_multiturn.py}"
@@ -27,7 +27,7 @@ TRAIN_BATCH_SIZE="${TRAIN_BATCH_SIZE:-32}"
 GROUP_SIZE="${GROUP_SIZE:-8}"
 RES_LENGTH="${RES_LENGTH:-2560}"
 SAVE_FREQ="${SAVE_FREQ:-50}"
-TEST_FREQ="${TEST_FREQ:-10000}"
+TEST_FREQ="${TEST_FREQ:--1}"
 PPO_MICRO_BATCH_SIZE_PER_GPU="${PPO_MICRO_BATCH_SIZE_PER_GPU:-32}"
 LOG_PROB_MICRO_BATCH_SIZE_PER_GPU="${LOG_PROB_MICRO_BATCH_SIZE_PER_GPU:-64}"
 MAX_NUM_SEQS="${MAX_NUM_SEQS:-1024}"
