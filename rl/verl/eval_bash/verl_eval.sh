@@ -245,6 +245,7 @@ python3 -m verl.trainer.main_ppo \
     trainer.project_name=$EXPERIMENT_NAME \
     trainer.experiment_name=$EXPERIMENT_NAME \
     trainer.validation_data_dir=$VALIDATION_DIR \
+    ${EVAL_EXTRA_ARGS:-} \
     2>&1 | tee "$LOG_FILE"
 
 # Capture the exit code from the python command (not tee)
