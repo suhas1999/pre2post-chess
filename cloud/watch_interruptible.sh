@@ -60,7 +60,9 @@ while true; do
     if [ "${setup}" = 1 ] && [ "${running}" = 0 ]; then
         say "starting run_paper_setup.sh (${RUN_ENV})"; launch; last_change=${now}; sleep 60; continue
     fi
-    step=$(grep -oE 'step:[0-9]+' <<<"${metrics}" | cut -d: -f2)
+    # Anchor on the leading "step:" field; "timing_s/step:" also matches a bare 'step:[0-9]+', and
+    # two numbers here break the arithmetic below, which aborts the whole loop in bash.
+    step=$(grep -oE '(^| )step:[0-9]+' <<<"${metrics}" | head -1 | cut -d: -f2)
     if [ -n "${step}" ] && [ $((step / 25)) -ne ${last_bucket} ]; then
         last_bucket=$((step / 25)); say "${metrics}"
     fi
