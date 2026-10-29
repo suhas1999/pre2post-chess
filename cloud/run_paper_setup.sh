@@ -12,7 +12,7 @@ rm -f "${WORK}/ALL_DONE" "${WORK}/ALL_FAILED"
 export N_GPUS="${N_GPUS:-4}" TOTAL_STEPS="${TOTAL_STEPS:-250}"
 export RAY_NUM_CPUS="${RAY_NUM_CPUS:-$((N_GPUS + 4))}"   # eval_rl.sh defaults to 4: too few for 4 GPU workers
 export TRAIN_BATCH_SIZE=256 GROUP_SIZE=8 RES_LENGTH=2560 ACTOR_LR=1e-5 KL_LOSS_COEF=0.001
-export PPO_MICRO_BATCH_SIZE_PER_GPU=32 MAX_NUM_SEQS=2048 MAX_ENV_CALLS=6 SAVE_FREQ=50
+export PPO_MICRO_BATCH_SIZE_PER_GPU=32 MAX_NUM_SEQS=2048 MAX_ENV_CALLS=6 SAVE_FREQ="${SAVE_FREQ:-50}"
 export EXPERIMENT_NAME="${MODEL_ID}_paper_bs256x8_${N_GPUS}gpu"
 # Validation never runs; keep the val file tiny so startup does not filter 53k prompts twice.
 export EVAL_DATA_PATH="${WORK}/data/val_tiny.parquet"
