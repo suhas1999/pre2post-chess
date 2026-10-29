@@ -265,6 +265,23 @@ def _build_dataproto(
     return dp
 
 
+_MAX_EMPTY_RETRIES = 3
+
+
+def _finish_or_retry_empty(state) -> None:
+    """A round produced no tokens (e.g. the first generated token was the pad id).
+
+    Finishing a sample that has no model tokens yet would leave it with an empty
+    policy_mask and fail the assembly assert, so keep it active and resample it in the
+    next round instead (up to _MAX_EMPTY_RETRIES times). Samples that already have
+    model tokens finish as before.
+    """
+    if state.n_model_tokens == 0 and state.n_empty_retries < _MAX_EMPTY_RETRIES:
+        state.n_empty_retries += 1
+    else:
+        state.finished = True
+
+
 # ---------------------------------------------------------------------------
 # Per-sample state
 # ---------------------------------------------------------------------------
@@ -279,6 +296,7 @@ class _SampleState:
         self.n_model_tokens: int = 0              # model-generated tokens so far
         self.n_env_calls: int = 0
         self.finished: bool = False
+        self.n_empty_retries: int = 0             # first-round outputs that were empty (pad-id first token)
         self.prompt_token_count: int = len(prompt_ids)  # prompt size in tokens
         self.env_replies_used: list = []          # env reply texts actually consumed
         self.response_logprobs: list[float] = []  # rollout log-prob per response token (0.0 for env tokens)
@@ -1158,7 +1176,7 @@ class ActorRolloutRefWorker(Worker, DistProfilerExtension):
                         # print(f"[DEBUG multi-turn] sample={i} j={j} n_tokens={len(tokens)} #calls={state.n_env_calls} hit_call_env={call_env_id in tokens} decoded={decoded!r:.200}")
 
                         if not tokens:
-                            state.finished = True
+                            _finish_or_retry_empty(state)
                             continue
 
                         # Clip to this sample's own remaining budget (round_tokens uses the
@@ -1802,7 +1820,7 @@ class ActorRolloutRefWorker(Worker, DistProfilerExtension):
                         n_dropped_generated += n_drop
 
                         if not tokens:
-                            state.finished = True
+                            _finish_or_retry_empty(state)
                             continue
 
                         # Clip to this sample's own remaining global budget
