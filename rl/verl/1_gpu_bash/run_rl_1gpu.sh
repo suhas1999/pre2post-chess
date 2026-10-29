@@ -45,10 +45,12 @@ MLFLOW_DIR="${RUN_DIR}/mlflow"
 ROLLOUT_DIR="${RUN_DIR}/rollouts/training"
 VALIDATION_DIR="${RUN_DIR}/rollouts/validation"
 
-export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-0}"
+# N_GPUS > 1 runs data-parallel FSDP + one vLLM engine per GPU on a single node.
+N_GPUS="${N_GPUS:-1}"
+export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-$(seq -s, 0 $((N_GPUS - 1)) | sed "s/,$//")}"
 # Rented containers can cap threads (Vast: pids.max=1024) while nproc reports the whole
 # host, so Ray/torch/vLLM pools sized to nproc die with "Resource temporarily unavailable".
-RAY_NUM_CPUS="${RAY_NUM_CPUS:-4}"
+RAY_NUM_CPUS="${RAY_NUM_CPUS:-$((N_GPUS + 3))}"
 export OMP_NUM_THREADS="${OMP_NUM_THREADS:-2}" MKL_NUM_THREADS="${MKL_NUM_THREADS:-2}"
 export TORCHINDUCTOR_COMPILE_THREADS=1 TOKENIZERS_PARALLELISM=false
 export RAY_num_server_call_thread=1 GRPC_POLL_STRATEGY=poll
@@ -60,7 +62,7 @@ unset ROCR_VISIBLE_DEVICES HIP_VISIBLE_DEVICES
 cd "${PKG_ROOT}"
 mkdir -p "${CHECKPOINT_DIR}" "$(dirname "${LOG_FILE}")" "${MLFLOW_DIR}" "${ROLLOUT_DIR}" "${VALIDATION_DIR}"
 
-echo "Starting 1-GPU RL job ${EXPERIMENT_NAME}"
+echo "Starting ${N_GPUS}-GPU RL job ${EXPERIMENT_NAME}"
 echo "Model=${BASE_MODEL}  steps=${TOTAL_STEPS}  batch=${TRAIN_BATCH_SIZE}x${GROUP_SIZE}  res=${RES_LENGTH}"
 
 python3 -m verl.trainer.main_ppo \
@@ -114,7 +116,7 @@ python3 -m verl.trainer.main_ppo \
   "trainer.logger=${LOGGERS}" \
   "trainer.project_name=${PROJECT_NAME}" \
   "trainer.experiment_name=${EXPERIMENT_NAME}" \
-  trainer.n_gpus_per_node=1 \
+  "trainer.n_gpus_per_node=${N_GPUS}" \
   "ray_init.num_cpus=${RAY_NUM_CPUS}" \
   trainer.nnodes=1 \
   "trainer.save_freq=${SAVE_FREQ}" \
