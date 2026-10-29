@@ -49,7 +49,7 @@ if [ ! -x "${VENV}/bin/python" ]; then
 fi
 source "${VENV}/bin/activate"
 uv pip install -e "rl[vllm]" "vllm==0.8.5" "transformers==4.51.3" \
-    python-chess mlflow liger-kernel "setuptools<80" "pyarrow>=19,<21"
+    python-chess mlflow liger-kernel "setuptools<80" "pyarrow>=19,<21" "datasets>=3,<4"
 uv pip install "${FLASH_ATTN_WHEEL}"
 python -c "import torch, vllm, transformers, flash_attn; print('torch', torch.__version__, \
 '| vllm', vllm.__version__, '| transformers', transformers.__version__, \
